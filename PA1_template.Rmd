@@ -1,25 +1,160 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+output: html_document
 ---
 
 
-## Loading and preprocessing the data
+### Loading and preprocessing the data
+
+* Load library to analyse datasets
+```{r summary, message=FALSE,results="hide",echo = TRUE}
+library(dplyr)
+```
+
+* Download and unzip the sample dataset to the working directory.
+* Load the dataset
+```{r,echo = TRUE}
+rawdata <- read.csv('activity.csv')
+```
+* Omitting the NA Values from the dataset
+```{r,echo = TRUE}
+rdata <- na.omit(rawdata)
+rdata$date <- as.Date(rdata$date)
+```
+
+### What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps per day (use dplyr library)
+```{r,echo = TRUE}
+#Function to Group, Order and summarise bby Day, Ignoring the NA values
+stepsperday <- rdata %>% 
+  group_by(date) %>% 
+  summarize(Total=sum(steps))
+```
+2. Plotting the Historgram
+
+```{r,echo = TRUE}
+# Show histogram of steps per day (Frequency->Count)
+hist(stepsperday$Total, 
+     xlab="Total steps taken each day", 
+     ylab="Count", 
+     main="Total steps taken each day",
+     col=4)
+```
+
+3. Calculate and Report the Mean and Median Steps per Day
+```{r, echo=TRUE, results="asis"}
+meansteps <- mean(stepsperday$Total,na.rm = TRUE)
+print(meansteps)
+medianstepd <- median(stepsperday$Total, na.rm = TRUE)
+print(medianstepd)
+```
+
+### What is the average daily activity pattern?
+
+1. Make a Time series plot on the 5 min intervals as the average steps taken across all days.
+```{r,echo = TRUE}
+#Time series where the Interval is the frequency and the avg steps per interval for each day
+timeseriesdata <- rdata %>%
+  group_by(interval) %>%
+  summarize(AvgSteps=mean(steps))
+
+# Make an average activity plot
+plot(timeseriesdata$interval, timeseriesdata$AvgSteps, 
+     type="l",
+     xlab="Interval",
+     ylab="Avg steps taken",
+     main="Avg steps taken during 5 min interval")
+
+```
+
+### Imputing missing values
+
+1. Calculate and Report Missing Values (NA's)
+
+```{r,echo = TRUE}
+summary(rawdata)
+#Cross check for aech variable in the original dataset
+colSums(is.na(rawdata))
+```
+2. Stategy to fill missing data
+
+* Replace each NA step value with the mean value and create a new raw dataset
+
+```{r , message=FALSE,results="hide",warning=FALSE,echo = TRUE}
+newdata <- rawdata
+for(i in 1:ncol(newdata)){
+  newdata[is.na(newdata[,i]), i] <- mean(newdata[,i], na.rm = TRUE)
+}
+```
+
+3. Create a new dataset with filled values
+
+```{r,echo = TRUE}
+stepsperdaynew <- newdata %>% 
+  group_by(date) %>% 
+  summarize(Total=sum(steps))
+```
+4. Plotting the Historgram
+
+```{r,echo = TRUE}
+# Show histogram of steps per day (Frequency->Count)
+hist(stepsperdaynew$Total, 
+     xlab="Total steps taken each day", 
+     ylab="Count", 
+     main="Total steps taken each day",
+     col=2)
+```
+
+5. Compare the data to the earlier dataset
+
+```{r, echo=TRUE, results="asis"}
+meanstepsnew <- mean(stepsperdaynew$Total,na.rm = TRUE)
+print(meanstepsnew)
+medianstepdnew <- median(stepsperdaynew$Total, na.rm = TRUE)
+print(medianstepdnew)
+```
+
+#### Conclussion: The mean values is the same but the median is different, therefore my stategy does affect the results.
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+1. Create a new factor variable in the new dataset (NA values replaced with mean)
+
+```{r, message=FALSE,results="hide",warning=FALSE,echo = TRUE}
+newdata <- rawdata
+for(i in 1:ncol(newdata)){
+  newdata[is.na(newdata[,i]), i] <- mean(newdata[,i], na.rm = TRUE)
+}
+
+newdata$date <- as.Date(newdata$date)
+#create a vector of weekdays
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+#Create the new variable
+newdata$wday <- weekdays(newdata$date)
+#Use `%in%` and `weekdays` to create a logical vector, convert to `factor` and specify the `levels/labels`
+newdata$wday <- factor((weekdays(newdata$date) %in% weekdays1),levels=c(FALSE, TRUE), labels=c('weekend', 'weekday'))
+```
+Use the Lattice plotting system
+```{r}
+library(lattice)
+```
+Create a new Data set for plotting
+```{r}
+timeseriesdata2 <- newdata %>%
+  group_by(wday,interval) %>%
+  summarize(AvgSteps=mean(steps))
+```
+
+2. Make a panel plot with a time series plot
+
+```{r}
+xyplot(AvgSteps ~ interval | wday, 
+       type = "l",
+       data = timeseriesdata2, 
+       layout = c(1,2))
+
+```
 
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+#### Conclussion: There is a peak in Activity during the week, people might be more busy during the week during working hours.
