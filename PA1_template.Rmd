@@ -77,7 +77,7 @@ summary(rawdata)
 #Cross check for aech variable in the original dataset
 colSums(is.na(rawdata))
 ```
-2. Stategy to fill missing data
+2. Strategy to fill missing data
 
 * Replace each NA step value with the mean value and create a new raw dataset
 

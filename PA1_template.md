@@ -114,7 +114,7 @@ colSums(is.na(rawdata))
 ##    steps     date interval 
 ##     2304        0        0
 ```
-2. Stategy to fill missing data
+2. Strategy to fill missing data
 
 * Replace each NA step value with the mean value and create a new raw dataset
 
